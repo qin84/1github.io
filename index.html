@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全球时区时钟</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Orbitron:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --accent-color: #4cc9f0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #2ecc71;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea, #764ba2, #3a0ca3, #4361ee);
+            background-size: 400% 400%;
+            animation: gradientBG 20s ease infinite;
+            color: var(--dark-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-attachment: fixed;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            padding: 30px;
+            position: relative;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, var(--accent-color), transparent);
+            border-radius: 50%;
+            opacity: 0.1;
+            z-index: -1;
+        }
+        
+        .container::after {
+            content: '';
+            position: absolute;
+            bottom: -80px;
+            left: -50px;
+            width: 250px;
+            height: 250px;
+            background: linear-gradient(45deg, transparent, #f72585);
+            border-radius: 50%;
+            opacity: 0.08;
+            z-index: -1;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin: 0 0 10px;
+            background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header p {
+            color: #6c757d;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+        
+        .timezone-selector-container {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 25px;
+            border-radius: 15px;
+            border: 1px solid #e9ecef;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+            position: relative;
+        }
+        
+        #timezone-selector {
+            width: 100%;
+            border: none;
+            font-size: 1rem;
+            padding: 15px 20px;
+            background: none;
+        }
+        
+        #timezone-selector option {
+            padding: 12px 20px;
+            border-bottom: 1px solid #f1f3f5;
+            transition: var(--transition);
+        }
+        
+        #timezone-selector option:last-child {
+            border-bottom: none;
+        }
+        
+        #timezone-selector option:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .utc-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-left: 10px;
+            display: inline-block;
+        }
+        
+        .time-display-container {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .time-display-container::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1));
+            z-index: 0;
+        }
+        
+        .time-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4.5rem;
+            margin: 0;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 0 10px rgba(0,0,0,0.3);
+            letter-spacing: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .date-display {
+            font-size: 1.8rem;
+            margin: 15px 0;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .weekday-display {
+            font-size: 1.4rem;
+            font-weight: 500;
+            background: rgba(255,255,255,0.15);
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 30px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .current-location {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+            color: #ffd166;
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .current-location i {
+            margin-right: 8px;
+        }
+        
+        .footer {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .time-display {
+                font-size: 3rem;
+            }
+            .date-display {
+                font-size: 1.4rem;
+            }
+            .weekday-display {
+                font-size: 1.2rem;
+            }
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .time-display {
+                font-size: 2.2rem;
+                letter-spacing: 2px;
+            }
+            .date-display {
+                font-size: 1.2rem;
+            }
+        }
+        
+        /* Animation for time digits */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .time-digit {
+            display: inline-block;
+            min-width: 0.7em;
+            text-align: center;
+            animation: pulse 1s;
+        }
+        
+        .hour-digit {
+            background: linear-gradient(45deg, #4cc9f0, #4361ee);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .minute-digit {
+            background: linear-gradient(45deg, #f72585, #7209b7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .second-digit {
+            background: linear-gradient(45deg, #ffbe0b, #fb5607);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .time-separator {
+            color: rgba(255, 255, 255, 0.7);
+            padding: 0 5px;
+        }
+        
+        /* Scrollbar styling */
+        .timezone-selector-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .timezone-selector-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .timezone-selector-container::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 10px;
+        }
+        
+        .timezone-selector-container::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+            display: none;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-globe-americas"></i> 全球时区时钟</h1>
+            <p>实时查看世界各地的时间</p>
+        </div>
+        
+        <div class="timezone-selector-container">
+            <div class="spinner" id="spinner"></div>
+            <select id="timezone-selector" size="8">
+                <!-- 时区选项将通过JavaScript动态生成 -->
+            </select>
+        </div>
+        
+        <div class="time-display-container">
+            <div class="date-display" id="date-display"></div>
+            <div class="time-display" id="time-display"></div>
+            <div class="weekday-display" id="weekday-display"></div>
+            <div class="current-location" id="current-location">
+                <i class="fas fa-location-dot"></i>
+                <span id="location-text"></span>
+            </div>
+        </div>
+        
+        <div class="footer">
+            当前时间: <span id="current-time"></span> | 本地时区: <span id="local-timezone"></span>
+        </div>
+    </div>
+
+    <script>
+        // 重构时区数据 - 每个地区单独显示
+        const timeZones = [
+            { name: "国际日期变更线西", offset: -12, utc: "UTC-12" },
+            { name: "萨摩亚", offset: -11, utc: "UTC-11" },
+            { name: "纽埃岛", offset: -11, utc: "UTC-11" },
+            { name: "库克岛", offset: -10, utc: "UTC-10" },
+            { name: "夏威夷阿留申", offset: -10, utc: "UTC-10" },
+            { name: "塔伊奥哈", offset: -9.5, utc: "UTC-9:30" },
+            { name: "阿拉斯加", offset: -9, utc: "UTC-9" },
+            { name: "甘比尔群岛", offset: -9, utc: "UTC-9" },
+            { name: "太平洋标准时间", offset: -8, utc: "UTC-8" },
+            { name: "皮特克恩", offset: -8, utc: "UTC-8" },
+            { name: "北美山地标准时间", offset: -7, utc: "UTC-7" },
+            { name: "北美中部标准时间", offset: -6, utc: "UTC-6" },
+            { name: "复活岛", offset: -6, utc: "UTC-6" },
+            { name: "加拉帕戈斯群岛", offset: -6, utc: "UTC-6" },
+            { name: "里奥布朗库", offset: -5, utc: "UTC-5" },
+            { name: "秘鲁", offset: -5, utc: "UTC-5" },
+            { name: "北美东部标准时间", offset: -5, utc: "UTC-5" },
+            { name: "厄瓜多尔", offset: -5, utc: "UTC-5" },
+            { name: "古巴", offset: -5, utc: "UTC-5" },
+            { name: "哥伦比亚", offset: -5, utc: "UTC-5" },
+            { name: "开曼群岛", offset: -5, utc: "UTC-5" },
+            { name: "智利", offset: -4, utc: "UTC-4" },
+            { name: "亚马逊时间", offset: -4, utc: "UTC-4" },
+            { name: "委内瑞拉", offset: -4, utc: "UTC-4" },
+            { name: "大 Atlantic 标准时间", offset: -4, utc: "UTC-4" },
+            { name: "巴拉圭", offset: -4, utc: "UTC-4" },
+            { name: "纽芬兰", offset: -3, utc: "UTC-3" },
+            { name: "格陵兰岛西部", offset: -3, utc: "UTC-3" },
+            { name: "皮埃尔和密克隆群岛", offset: -3, utc: "UTC-3" },
+            { name: "法属圭亚那", offset: -3, utc: "UTC-3" },
+            { name: "巴西利亚", offset: -3, utc: "UTC-3" },
+            { name: "阿根廷", offset: -3, utc: "UTC-3" },
+            { name: "费尔南多-迪诺罗尼亚", offset: -2, utc: "UTC-2" },
+            { name: "蓬塔德尔加达", offset: -1, utc: "UTC-1" },
+            { name: "格陵兰岛东部", offset: -1, utc: "UTC-1" },
+            { name: "格林威治标准时间", offset: 0, utc: "UTC±0" },
+            { name: "世界标准时间", offset: 0, utc: "UTC±0" },
+            { name: "西撒哈拉", offset: 0, utc: "UTC±0" },
+            { name: "西欧时间", offset: 0, utc: "UTC±0" },
+            { name: "欧洲中部时间", offset: 1, utc: "UTC+1" },
+            { name: "非洲中部时间", offset: 2, utc: "UTC+2" },
+            { name: "以色列", offset: 2, utc: "UTC+2" },
+            { name: "南非", offset: 2, utc: "UTC+2" },
+            { name: "欧洲东部时间", offset: 3, utc: "UTC+3" },
+            { name: "非洲东部时间", offset: 3, utc: "UTC+3" },
+            { name: "昭和站", offset: 3, utc: "UTC+3" },
+            { name: "莫斯科", offset: 3, utc: "UTC+3" },
+            { name: "伊朗", offset: 3.5, utc: "UTC+3:30" },
+            { name: "阿塞拜疆", offset: 4, utc: "UTC+4" },
+            { name: "海湾标准时间", offset: 4, utc: "UTC+4" },
+            { name: "乔治亚州", offset: 4, utc: "UTC+4" },
+            { name: "喀布尔", offset: 4.5, utc: "UTC+4:30" },
+            { name: "马尔代夫", offset: 5, utc: "UTC+5" },
+            { name: "巴基斯坦", offset: 5, utc: "UTC+5" },
+            { name: "哈萨克斯坦乌拉尔", offset: 5, utc: "UTC+5" },
+            { name: "法国南部和南极", offset: 5, utc: "UTC+5" },
+            { name: "印度", offset: 5.5, utc: "UTC+5:30" },
+            { name: "尼泊尔", offset: 5.75, utc: "UTC+5:45" },
+            { name: "新西伯利亚", offset: 6, utc: "UTC+6" },
+            { name: "鄂木斯克", offset: 6, utc: "UTC+6" },
+            { name: "东方号站", offset: 6, utc: "UTC+6" },
+            { name: "缅甸", offset: 6.5, utc: "UTC+6:30" },
+            { name: "印尼西部", offset: 7, utc: "UTC+7" },
+            { name: "圣诞岛", offset: 7, utc: "UTC+7" },
+            { name: "中国标准时间", offset: 8, utc: "UTC+8" },
+            { name: "新加坡", offset: 8, utc: "UTC+8" },
+            { name: "印尼中部", offset: 8, utc: "UTC+8" },
+            { name: "澳大利亚西部", offset: 8, utc: "UTC+8" },
+            { name: "南极洲凯西", offset: 8, utc: "UTC+8" },
+            { name: "马来西亚", offset: 8, utc: "UTC+8" },
+            { name: "平壤", offset: 8.5, utc: "UTC+8:30" },
+            { name: "澳大利亚中部西部", offset: 8.75, utc: "UTC+8:45" },
+            { name: "日本", offset: 9, utc: "UTC+9" },
+            { name: "印尼东部", offset: 9, utc: "UTC+9" },
+            { name: "东帝汶", offset: 9, utc: "UTC+9" },
+            { name: "韩国", offset: 9, utc: "UTC+9" },
+            { name: "澳大利亚中央标准时间", offset: 9.5, utc: "UTC+9:30" },
+            { name: "巴布亚新几内亚", offset: 10, utc: "UTC+10" },
+            { name: "澳大利亚东部", offset: 10, utc: "UTC+10" },
+            { name: "豪勋爵岛", offset: 10.5, utc: "UTC+10:30" },
+            { name: "库赛埃", offset: 11, utc: "UTC+11" },
+            { name: "布干维尔岛", offset: 11, utc: "UTC+11" },
+            { name: "堪察加半岛", offset: 12, utc: "UTC+12" },
+            { name: "查塔姆岛", offset: 12.75, utc: "UTC+12:45" },
+            { name: "汤加", offset: 13, utc: "UTC+13" },
+            { name: "托克劳", offset: 13, utc: "UTC+13" },
+            { name: "莱恩群岛", offset: 14, utc: "UTC+14" },
+            { name: "国际日期变更线东", offset: 15, utc: "UTC+15" }
+        ];
+
+        // DOM元素
+        const timezoneSelector = document.getElementById('timezone-selector');
+        const timeDisplay = document.getElementById('time-display');
+        const dateDisplay = document.getElementById('date-display');
+        const weekdayDisplay = document.getElementById('weekday-display');
+        const locationText = document.getElementById('location-text');
+        const currentTime = document.getElementById('current-time');
+        const localTimezone = document.getElementById('local-timezone');
+        const spinner = document.getElementById('spinner');
+
+        // 显示加载状态
+        spinner.style.display = 'block';
+
+        // 初始化时区选择器
+        function initTimezoneSelector() {
+            // 使用DocumentFragment减少DOM操作次数
+            const fragment = document.createDocumentFragment();
+            
+            timeZones.forEach(tz => {
+                const option = document.createElement('option');
+                option.value = tz.offset;
+                option.dataset.name = tz.name;
+                
+                // 使用模板字符串提高效率
+                option.innerHTML = `${tz.name} <span class="utc-badge">${tz.utc}</span>`;
+                
+                fragment.appendChild(option);
+            });
+            
+            timezoneSelector.appendChild(fragment);
+            spinner.style.display = 'none';
+        }
+
+        // 设置默认时区为本地时区
+        function setDefaultTimezone() {
+            const localOffset = -new Date().getTimezoneOffset() / 60;
+            let closestMatch = timeZones[0];
+            let minDiff = Math.abs(timeZones[0].offset - localOffset);
+            
+            // 优化查找算法
+            for (let i = 1; i < timeZones.length; i++) {
+                const tz = timeZones[i];
+                const diff = Math.abs(tz.offset - localOffset);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestMatch = tz;
+                }
+            }
+            
+            timezoneSelector.value = closestMatch.offset;
+            locationText.textContent = closestMatch.name;
+            
+            // 显示本地时区信息
+            try {
+                const localTzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                localTimezone.textContent = localTzName;
+            } catch (e) {
+                localTimezone.textContent = "UTC " + (localOffset >= 0 ? "+" : "") + localOffset;
+            }
+        }
+
+        // 更新时间显示
+        function updateTime() {
+            const now = new Date();
+            const selectedOffset = parseFloat(timezoneSelector.value);
+            
+            // 计算目标时区时间
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const targetTime = new Date(utc + (selectedOffset * 3600000));
+            
+            // 获取当前选中的时区名称
+            const selectedOption = timezoneSelector.options[timezoneSelector.selectedIndex];
+            locationText.textContent = selectedOption.dataset.name;
+            
+            // 格式化时间
+            const hours = targetTime.getHours().toString().padStart(2, '0');
+            const minutes = targetTime.getMinutes().toString().padStart(2, '0');
+            const seconds = targetTime.getSeconds().toString().padStart(2, '0');
+            
+            // 使用高效的时间显示方式
+            timeDisplay.innerHTML = `
+                <span class="time-digit hour-digit">${hours.charAt(0)}</span>
+                <span class="time-digit hour-digit">${hours.charAt(1)}</span>
+                <span class="time-separator">:</span>
+                <span class="time-digit minute-digit">${minutes.charAt(0)}</span>
+                <span class="time-digit minute-digit">${minutes.charAt(1)}</span>
+                <span class="time-separator">:</span>
+                <span class="time-digit second-digit">${seconds.charAt(0)}</span>
+                <span class="time-digit second-digit">${seconds.charAt(1)}</span>
+            `;
+            
+            // 格式化日期
+            const year = targetTime.getFullYear();
+            const month = (targetTime.getMonth() + 1).toString().padStart(2, '0');
+            const day = targetTime.getDate().toString().padStart(2, '0');
+            
+            // 星期几
+            const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            const weekday = weekdays[targetTime.getDay()];
+            
+            // 更新显示
+            dateDisplay.textContent = `${year}年${month}月${day}日`;
+            weekdayDisplay.textContent = weekday;
+            
+            // 更新页脚当前时间
+            const currentHours = now.getHours().toString().padStart(2, '0');
+            const currentMinutes = now.getMinutes().toString().padStart(2, '0');
+            const currentSeconds = now.getSeconds().toString().padStart(2, '0');
+            currentTime.textContent = `${currentHours}:${currentMinutes}:${currentSeconds}`;
+        }
+
+        // 初始化
+        function init() {
+            initTimezoneSelector();
+            setDefaultTimezone();
+            updateTime();
+            
+            // 每秒更新时间
+            setInterval(updateTime, 1000);
+            
+            // 当时区变化时更新时间
+            timezoneSelector.addEventListener('change', updateTime);
+        }
+
+        // 启动应用
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
